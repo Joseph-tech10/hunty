@@ -1,5 +1,5 @@
 "use client";
-import { ArrowRight, Trophy, Search, HelpCircle } from "lucide-react";
+import { ArrowRight, Compass, HelpCircle, Search, Trophy, X } from "lucide-react";
 "use client";
 
 import { EmptyState } from "@/components/QueryState";
@@ -12,22 +12,20 @@ import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { X, ArrowRight, Trophy, Search, HelpCircle, Compass } from "lucide-react"
+
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getHuntCapacity, getRemainingSpots } from "@/lib/huntStore"
+import { getAllHunts, getHunt, getHuntCapacity, getRemainingSpots, getSpotlightHunts, isHuntPromoted, type StoredHunt } from "@/lib/huntStore"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Header } from "@/components/Header"
 import { HuntCoverImage } from "@/components/HuntCoverImage"
 import { HuntOfTheWeekBanner } from "@/components/HuntOfTheWeekBanner"
 import { HuntCardSkeletonGrid } from "@/components/LoadingSkeletons"
-import { Card, CardDescription, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import { usePlayerCounts } from "@/hooks/usePlayerCounts"
 import { useRecentlyCompleted } from "@/hooks/useRecentlyCompleted"
 import { hankenGrotesk } from "@/lib/font"
-import { getAllHunts, getHunt, getSpotlightHunts, isHuntPromoted, type StoredHunt } from "@/lib/huntStore"
+
 import { queryCachePolicy, queryKeys } from "@/lib/queryKeys"
 import { StarRating } from "@/components/StarRating"
 import { FavoriteButton } from "@/components/FavoriteButton"
@@ -620,6 +618,15 @@ export default function GameArcade() {
   const [visibleInactiveCount, setVisibleInactiveCount] = useState(INACTIVE_PAGE_SIZE)
   const [isLoadingMoreInactive, setIsLoadingMoreInactive] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [localSearchQuery, setLocalSearchQuery] = useState("")
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(localSearchQuery)
+    }, 250)
+    return () => clearTimeout(timer)
+  }, [localSearchQuery])
+
   const [activeTab, setActiveTab] = useState<"leaderboard" | "none">("none")
   const [rewardFilter, setRewardFilter] = useState<"all" | "XLM" | "NFT" | "Both">("all")
   const [statusFilter, setStatusFilter] = useState<"all" | "Active" | "Completed">("Active")
@@ -639,6 +646,7 @@ export default function GameArcade() {
     const sortBy = searchParams.get("sortBy") ?? "newest";
 
     setSearchQuery(q);
+    setLocalSearchQuery(q);
     if (["all", "XLM", "NFT", "Both"].includes(reward)) {
       setRewardFilter(reward as "all" | "XLM" | "NFT" | "Both");
     }
@@ -866,6 +874,7 @@ export default function GameArcade() {
   // Clear scroll position and reset pagination when filter state changes
   useEffect(() => {
     setSearchQuery("");
+    setLocalSearchQuery("");
     setRewardFilter("all");
     setStatusFilter("Active");
     setDifficultyFilter("all");
@@ -877,6 +886,7 @@ export default function GameArcade() {
 
   const clearAllFilters = () => {
     setSearchQuery("");
+    setLocalSearchQuery("");
     setRewardFilter("all");
     setStatusFilter("Active");
     setDifficultyFilter("all");
@@ -1226,8 +1236,8 @@ export default function GameArcade() {
                   <Input
                     list="hunt-search-suggestions"
                     placeholder="Search title or description..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={localSearchQuery}
+                    onChange={(e) => setLocalSearchQuery(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:border-[#3737A4] focus:ring-[#3737A4] pl-3 h-10 rounded-xl"
                   />
                   <datalist id="hunt-search-suggestions">
